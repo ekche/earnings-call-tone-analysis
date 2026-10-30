@@ -5,3 +5,4 @@ data/price_cache/
 data/*.csv
 outputs/real/
 .DS_Store
+outputs/real*/

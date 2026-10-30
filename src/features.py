@@ -47,9 +47,15 @@ def tokenize(text):
     return re.findall(r"[a-z']+", str(text).lower())
 
 
+QA_TOKEN = "[[QA_START]]"   # inserted by make_dataset.py where the Q&A begins
+
+
 def split_sections(text):
     """Split into (prepared remarks, Q&A). Q&A is '' if no marker is found."""
     text = str(text)
+    if QA_TOKEN in text:
+        prep, qa = text.split(QA_TOKEN, 1)
+        return prep, qa
     m = QA_MARKER.search(text)
     if m and m.start() > 0.05 * len(text):
         return text[:m.start()], text[m.end():]
@@ -66,7 +72,7 @@ def text_features(text, lex=None):
     lex = lex or DEFAULT_LEXICON
     prepared, qa = split_sections(text)
     out = {}
-    for name, part in (("prep", prepared), ("qa", qa), ("all", str(text))):
+    for name, part in (("prep", prepared), ("qa", qa), ("all", str(text).replace(QA_TOKEN, " "))):
         toks = tokenize(part)
         n = len(toks)
         out[f"{name}_words"] = n

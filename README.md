@@ -36,7 +36,7 @@ Management tone on its own has a 0.69% top-minus-bottom quintile spread (t = 2.2
 - **Association, not forecast.** Many calls start after the earnings release, so day 0 can already include the reaction to the numbers.
 - **Earnings surprise is not controlled for.** Analyst tone may simply proxy for good or bad results.
 - **Roles are inferred** from speaking order and question marks, so some turns may be mislabelled; an early version that ignored the operator counted executives who only join the Q&A as analysts; correcting it moved the estimates modestly (analyst-tone t from 3.04 to 3.43) and did not change the conclusion.
-- **Survivorship bias.** Some transcripts are from companies that are no longer listed (for example FRC, CERN, KSU), and Yahoo Finance returned no prices for them or for a few active tickers (EQR, QRVO, LEG). 233 of 3,339 calls had no price data, so the price-matched sample leans toward survivors.
+- **Survivorship bias.** 233 of 3,339 calls had no price data: 134 came from five companies that were acquired or failed (JNPR, FRC, NLSN, CERN, KSU), 93 from three still-listed tickers for which Yahoo Finance returned nothing (EQR, QRVO, LEG), and 6 from IR. The price-matched sample therefore leans toward survivors; I have not measured the effect on the results.
 - **Simple benchmark.** Market-adjusted returns, not a Fama-French factor model.
 - **Multiple testing.** Seven features were tested; lexicon methods ignore context and negation.
 - **Text and timing details.** Prepared-remarks tone is scored on text that still includes speaker labels and operator boilerplate. Call timestamps are assumed US Eastern, and a few calls carry midnight timestamps and are treated as pre-market.

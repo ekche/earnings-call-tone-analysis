@@ -86,9 +86,11 @@ def make_plots(df, outdir, signal="net_tone", target="car"):
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.bar(tab.index.astype(str), tab["mean"] * 100, color="#3b6ea5")
     ax.axhline(0, color="k", lw=0.8)
-    ax.set_xlabel(f"{signal} quintile (1 = most negative)")
+    nice = {"net_tone_analyst": "analyst question tone", "net_tone_mgmt": "management answer tone",
+            "net_tone": "overall call tone"}.get(signal, signal)
+    ax.set_xlabel(f"Quintile of {nice} (1 = most negative)")
     ax.set_ylabel("Mean abnormal return, % (days 0 to +2)")
-    ax.set_title("Market reaction by call tone")
+    ax.set_title(f"3-day abnormal return by {nice}")
     fig.tight_layout(); fig.savefig(f"{outdir}/quintiles{sfx}.png", dpi=150); plt.close(fig)
 
     d = clean(df, [signal], target)

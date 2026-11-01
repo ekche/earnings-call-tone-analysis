@@ -18,7 +18,7 @@ Coefficient = change in 3-day abnormal return per 1 SD of the feature.
 
 R-squared: 0.0224  (VIF above ~5 would flag collinearity)
 
-## 2. Quintile sort on net tone
+## Quintile sort on overall net tone
 |   quintile |    mean |    std |   count |
 |-----------:|--------:|-------:|--------:|
 |          1 | -0.0083 | 0.035  |     160 |
@@ -29,7 +29,7 @@ R-squared: 0.0224  (VIF above ~5 would flag collinearity)
 
 Top-minus-bottom spread: 0.84% (Welch t = 2.21, p = 0.028)
 
-## 3. Out-of-sample (train on earliest 70%, test on latest 30%)
+## Out-of-sample (train on earliest 70%, test on latest 30%)
 - Test calls: 240
 - Out-of-sample R-squared: -0.0164 (above 0 means it beat guessing the training mean)
 - Direction hit rate: 52.9%
@@ -39,5 +39,6 @@ Top-minus-bottom spread: 0.84% (Welch t = 2.21, p = 0.028)
 - Abnormal return uses a simple market-adjusted model, not Fama-French factors.
 - Earnings surprise (actual vs. consensus EPS) is not controlled for; tone may just proxy for it.
 - Lexicon methods ignore context and negation.
+- Management vs analyst is inferred (who spoke before the Q&A), so some executives who only speak in the Q&A are counted as analysts.
 - No transaction costs; a long-short spread is not a tradable strategy by itself.
 - Multiple features tested, so some significance may be chance.

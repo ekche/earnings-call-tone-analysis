@@ -127,3 +127,39 @@ def finbert_scores(texts, model_name="ProsusAI/finbert", chunk_words=200,
             vals.extend((probs[:, pos_i] - probs[:, neg_i]).tolist())
         scores.append(float(np.mean(vals)) if vals else np.nan)
     return scores
+
+
+# ---------- speaker-split features: management answers vs analyst questions ----------
+MIN_ROLE_WORDS = 30
+
+
+def role_features(text, prefix, lex=None):
+    """Tone and hedging for one speaker group's Q&A text (NaN if too short)."""
+    lex = lex or DEFAULT_LEXICON
+    toks = tokenize(text)
+    n = len(toks)
+    keys = ("pos", "neg", "unc")
+    out = {f"{prefix}_words": n}
+    if n < MIN_ROLE_WORDS:
+        out.update({f"{prefix}_{k}": np.nan for k in keys})
+        out[f"{prefix}_hedge_rate"] = np.nan
+        out[f"{prefix}_evasive_rate"] = np.nan
+    else:
+        for k in keys:
+            out[f"{prefix}_{k}"] = sum(t in lex[k] for t in toks) / n
+        out[f"{prefix}_hedge_rate"] = _phrase_rate(text, HEDGE_PHRASES, n)
+        out[f"{prefix}_evasive_rate"] = _phrase_rate(text, EVASIVE_PHRASES, n)
+    return out
+
+
+def add_speaker_features(df, lex=None):
+    """Needs 'analyst_qa' and 'mgmt_qa' text columns (made by make_dataset.py)."""
+    rows = []
+    for a, m in zip(df["analyst_qa"].fillna(""), df["mgmt_qa"].fillna("")):
+        r = role_features(a, "analyst", lex)
+        r.update(role_features(m, "mgmt", lex))
+        rows.append(r)
+    f = pd.DataFrame(rows, index=df.index)
+    f["net_tone_analyst"] = f["analyst_pos"] - f["analyst_neg"]
+    f["net_tone_mgmt"] = f["mgmt_pos"] - f["mgmt_neg"]
+    return pd.concat([df, f], axis=1)

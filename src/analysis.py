@@ -11,6 +11,10 @@ FEATURES = ["net_tone_prep", "net_tone_qa", "qa_uncertainty", "qa_hedge_rate",
             "qa_evasive_rate", "log_words"]
 
 
+SPLIT_FEATURES = ["net_tone_prep", "net_tone_mgmt", "net_tone_analyst", "mgmt_unc",
+                  "mgmt_hedge_rate", "mgmt_evasive_rate", "log_words"]
+
+
 def zscore(df, cols, ref=None):
     ref = df if ref is None else ref
     return (df[cols] - ref[cols].mean()) / ref[cols].std(ddof=0).replace(0, 1)
@@ -74,6 +78,7 @@ def out_of_sample(df, features, target="car", train_frac=0.7, alpha=50.0):
 
 
 def make_plots(df, outdir, signal="net_tone", target="car"):
+    sfx = "" if signal == "net_tone" else f"_{signal}"
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -84,7 +89,7 @@ def make_plots(df, outdir, signal="net_tone", target="car"):
     ax.set_xlabel(f"{signal} quintile (1 = most negative)")
     ax.set_ylabel("Mean abnormal return, % (days 0 to +2)")
     ax.set_title("Market reaction by call tone")
-    fig.tight_layout(); fig.savefig(f"{outdir}/quintiles.png", dpi=150); plt.close(fig)
+    fig.tight_layout(); fig.savefig(f"{outdir}/quintiles{sfx}.png", dpi=150); plt.close(fig)
 
     d = clean(df, [signal], target)
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -93,4 +98,4 @@ def make_plots(df, outdir, signal="net_tone", target="car"):
     xs = np.linspace(d[signal].min(), d[signal].max(), 50)
     ax.plot(xs, np.polyval(b, xs), color="crimson")
     ax.set_xlabel(signal); ax.set_ylabel("Abnormal return, %")
-    fig.tight_layout(); fig.savefig(f"{outdir}/scatter.png", dpi=150); plt.close(fig)
+    fig.tight_layout(); fig.savefig(f"{outdir}/scatter{sfx}.png", dpi=150); plt.close(fig)

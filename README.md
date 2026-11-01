@@ -1,49 +1,53 @@
 # Do earnings-call words move stocks?
 
-A reproducible pipeline that scores earnings-call transcripts for tone, uncertainty, hedging and evasiveness, measures the stock's 3-day abnormal return around each call, and tests whether the language lines up with the market reaction. Built with Python (pandas, statsmodels, scikit-learn); runs from the terminal.
+A reproducible pipeline that scores earnings-call transcripts for tone, uncertainty, hedging and evasiveness, separates what analysts say from what management says, and tests whether the language lines up with the stock's 3-day abnormal return around each call. Built with Python (pandas, statsmodels, scikit-learn); runs from the terminal.
 
 ## Headline result
-- **Q&A tone is statistically significant but economically small.** A 1 SD more positive Q&A tone goes with about +0.39 percentage points of 3-day abnormal return (t = 3.90, ticker-clustered).
-- **Calls in the most negative-tone quintile averaged -0.75% and the most positive +0.39%**, a 1.13% spread (Welch t = 3.82).
-- **Call language explains under 1% of return variation** (R-squared 0.65%), and **out-of-sample predictive power is essentially zero** (R-squared 0.0001, direction hit rate 51.8%). This is an association, not a trading signal.
+- **Analyst question tone, not management's answers, is what lines up with the market reaction.** A 1 SD more positive analyst tone goes with about +0.47 percentage points of 3-day abnormal return (t = 3.43, ticker-clustered), controlling for management tone and hedging. Management tone is not significant once analyst tone is included (t = 0.73).
+- **The pattern is monotonic across analyst-tone quintiles:** from -0.88% (most negative) to +0.49% (most positive), a 1.37% spread (Welch t = 4.63).
+- **Language explains about 1% of return variation (R-squared 1.06%).** Out-of-sample, the top third of predictions beat the bottom third by 1.10 pp, but direction hit rate is only 51.5% and out-of-sample R-squared is 0.7%. This is an association, not a tradable signal.
+- **Most likely reading:** analysts' tone mostly reflects the earnings news itself, which the stock also reacts to. I have not tested that directly (see limitations).
 
-<img src="results/quintiles.png" width="480">
+<img src="results/quintiles_net_tone_analyst.png" width="420"> <img src="results/quintiles_net_tone_mgmt.png" width="420">
 
 ## Data and method
-- **Transcripts:** the MIT-licensed Hugging Face dataset kurry/sp500_earnings_transcripts. Sample: 100 randomly chosen S&P 500 tickers (seed 0), 2016-2024. 3,339 calls with a detectable Q&A section, 3,106 with price data.
+- **Transcripts:** the MIT-licensed Hugging Face dataset kurry/sp500_earnings_transcripts. Sample: 100 randomly chosen S&P 500 tickers (seed 0), 2016-2024. 3,339 calls with a detectable Q&A section, 3,106 with price data, 3,060 with complete text features.
+- **Speaker split:** the Q&A starts at the first operator turn that mentions questions after management has spoken. Anyone who spoke before the Q&A is management; anyone the operator hands the floor to is an analyst; remaining speakers count as analysts only if at least 25% of their turns contain a question mark.
 - **Market reaction:** stock return minus SPY, summed over trading days 0 to +2 from the first trading day on or after the call; shifted one day for calls starting at or after 4pm (timestamps assumed US Eastern). Prices from Yahoo Finance via yfinance.
-- **Text features:** Loughran-McDonald positive/negative/uncertainty word shares (prepared remarks and Q&A scored separately), hedge-phrase and evasive-phrase rates in the Q&A, transcript length.
-- **Tests:** OLS on standardized features with ticker-clustered standard errors (plus VIF check), quintile sort, and a time-split out-of-sample test (train on the earliest 70% of calls, test on the latest 30%).
+- **Text features:** Loughran-McDonald positive/negative/uncertainty word shares for prepared remarks, management answers and analyst questions, plus hedge-phrase and evasive-phrase rates in management answers and transcript length.
+- **Tests:** OLS on standardized features with ticker-clustered standard errors (plus VIF check), quintile sorts, and a time-split out-of-sample test (train on the earliest 70% of calls, test on the latest 30%).
 
 ## Results (Loughran-McDonald dictionary)
 | Feature | Effect per 1 SD | t | p |
 |:--|--:|--:|--:|
-| Q&A net tone | +0.39 pp | 3.90 | 0.0001 |
-| Prepared-remarks net tone | +0.17 pp | 2.12 | 0.034 |
-| Q&A uncertainty | +0.15 pp | 1.41 | 0.158 |
-| Q&A hedge rate | -0.03 pp | -0.32 | 0.747 |
-| Q&A evasive rate | +0.02 pp | 0.19 | 0.852 |
-| Transcript length (log) | -0.09 pp | -0.92 | 0.355 |
+| Analyst question tone | +0.47 pp | 3.43 | 0.0006 |
+| Prepared-remarks tone | +0.20 pp | 2.35 | 0.019 |
+| Management answer tone | +0.09 pp | 0.73 | 0.465 |
+| Management uncertainty | +0.08 pp | 0.80 | 0.426 |
+| Management hedge rate | 0.00 pp | -0.01 | 0.995 |
+| Management evasive rate | -0.01 pp | -0.11 | 0.914 |
+| Transcript length (log) | -0.07 pp | -0.69 | 0.488 |
 
-**Robustness:** a smaller hand-built word list gave the same Q&A result (t = 3.84, spread 1.12%). Prepared-remarks tone was not significant under it (p = 0.19), so I treat that coefficient as unreliable. Full reports are in results/.
+Management tone on its own has a 0.69% top-minus-bottom quintile spread (t = 2.26), but it is flat across the top four quintiles and disappears once analyst tone is controlled. Management and analyst tone correlate at 0.31.
+
+**Robustness:** before the speaker split, overall Q&A tone had t = 3.90 and a 1.13% quintile spread, and a smaller hand-built word list gave the same result. Prepared-remarks tone is unstable across specifications (p from 0.19 to 0.002), and does not clear a multiple-testing correction across seven features, so I do not rely on it. Full reports are in results/.
 
 ## Limitations
 - **Association, not forecast.** Many calls start after the earnings release, so day 0 can already include the reaction to the numbers.
-- **Earnings surprise is not controlled for.** Tone may simply proxy for good or bad results.
-- **Q&A text includes analysts' questions,** not only management's answers.
+- **Earnings surprise is not controlled for.** Analyst tone may simply proxy for good or bad results.
+- **Roles are inferred** from speaking order and question marks, so some turns may be mislabelled; an early version that ignored the operator misclassified executives who only join the Q&A and gave misleading results.
 - **Survivorship bias.** The data covers current S&P 500 constituents; 233 calls had no price data (mostly acquired or delisted companies).
 - **Simple benchmark.** Market-adjusted returns, not a Fama-French factor model.
-- **Multiple testing.** Six features were tested; lexicon methods ignore context and negation.
-- Tone is not a tradable strategy: no transaction costs, and the out-of-sample test shows no reliable edge.
+- **Multiple testing.** Seven features were tested; lexicon methods ignore context and negation.
+- **Not a trading strategy:** no transaction costs, and individual-call direction is barely better than a coin flip.
 
 ## Reproduce
     pip install -r requirements.txt
     python -m pytest -q tests
-    python patch_features.py
     python make_dataset.py
     python run.py run --transcripts data/calls.csv --lm-dict data/LM_MasterDictionary.csv
 
 Download the Loughran-McDonald Master Dictionary CSV from https://sraf.nd.edu/loughranmcdonald-master-dictionary/ and save it as data/LM_MasterDictionary.csv (free for non-commercial research; not redistributed here). Add --finbert to also score with FinBERT (needs torch and transformers). `python run.py demo` runs on synthetic data to check the pipeline; its planted relationship is not a finding.
 
 ## Next steps
-Separate management answers from analyst questions using speaker labels, control for earnings surprise, test a post-call drift window (days +1 to +3), and add Fama-French factors.
+List which words drive analyst tone, control for earnings surprise, test a post-call drift window (days +1 to +3), and add Fama-French factors.

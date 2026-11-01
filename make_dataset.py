@@ -6,6 +6,7 @@ Also splits each call's Q&A into management answers vs analyst questions.
   python make_dataset.py --tickers 200 --start 2012 --end 2024
 """
 import argparse
+import os
 import numpy as np
 import pandas as pd
 from src.features import QA_TOKEN
@@ -127,6 +128,7 @@ def main():
         "analyst_qa": df["analyst_qa"],
         "mgmt_qa": df["mgmt_qa"],
     })
+    os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     out.to_csv(a.out, index=False)
     print(f"\nWrote {len(out)} calls to {a.out}")
 
